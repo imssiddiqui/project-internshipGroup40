@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const route = require('./routes/route.js');
+const route = require('./route/route');
 const { default: mongoose } = require('mongoose');
 const app = express();
 
@@ -14,12 +14,12 @@ mongoose.connect("mongodb+srv://chetan1297:9JBxn4iQEY3rMnB@cluster0.gi2f1j9.mong
     .then(() => console.log("MongoDb is connected"))
     .catch(err => console.log(err))
 
-// app.use (
-//     function (req, res, next) {
-//         console.log ("inside GLOBAL MW");
+// app.use(
+//     function(req, res, next) {
+//         console.log("inside GLOBAL MW");
 //         next();
-//   }
-//   );
+//     }
+// );
 
 app.use('/', route);
 

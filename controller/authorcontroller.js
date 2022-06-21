@@ -1,5 +1,6 @@
-const axios = require("axios")
-const authormodel = require("../model/authormodel");
+// const axios = require("axios")
+// const authormodel = require("../model/authormodel");
+const authorModel = require("../model/authorModel");
 
 const createAuthor = async function(req, res) {
     try {
