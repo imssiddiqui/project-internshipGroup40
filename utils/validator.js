@@ -12,9 +12,14 @@ const isValid = function(value) {
 const isValidObjectId = function(objectId) {
     return mongoose.Types.ObjectId.isValid(objectId);
 };
+const isValidString = function(value) {
+    if (typeof value === "string" && value.trim().length === 0) return false;
+    return true;
+};
 
 module.exports = {
     isValidRequestBody,
     isValid,
-    isValidObjectId
+    isValidObjectId,
+    isValidString
 }
