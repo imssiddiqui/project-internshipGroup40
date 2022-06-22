@@ -1,6 +1,6 @@
-// const axios = require("axios")
-// const authormodel = require("../model/authormodel");
 const authorModel = require("../model/authorModel");
+
+const validator = require("../utils/validator");
 
 const createAuthor = async function(req, res) {
     try {
