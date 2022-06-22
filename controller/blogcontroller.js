@@ -243,7 +243,7 @@ const deleteBlogById = async function(req, res) {
         if (!validator.isValidObjectId(id)) {
             return res
                 .status(400)
-                .send({ status: false, message: `BlogId is invalid.` });
+                .send({ status: false, message: " BlogId is invalid." });
         }
 
         let data = await blogModel.findOne({ _id: id });
@@ -269,7 +269,7 @@ const deleteByQuery = async function(req, res) {
 
         if (authorId) {
             if (!validator.isValidObjectId(authorId)) {
-                return res.status(401).send({ status: false, message: `authorId is not valid.` });
+                return res.status(401).send({ status: false, message: "authorId is not valid." });
             }
         }
         let data = await blogModel.find({ $or: [{ category: category }, { authorId: authorId }, { tags: tags }, { subcategory: subcategory }, { isPublished: isPublished }] });
@@ -291,3 +291,10 @@ module.exports = {
     deleteBlogById,
     deleteByQuery
 }
+
+
+// arr = [1, 2, 3]
+// const [a, b, ...n] = [1, 2, 3]
+// console.log(a)
+// console.log(b)
+// console.log(n)
