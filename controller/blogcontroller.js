@@ -1,7 +1,7 @@
 const blogModel = require("../model/blogModel");
 const authorModel = require("../model/authorModel");
-const validator = require("../utils/validator")
-    // const jwt = require("jsonwebtoken");
+const validator = require("../utils/validator");
+
 
 
 const createBlog = async function(req, res) {
@@ -15,7 +15,7 @@ const createBlog = async function(req, res) {
             });
         }
         // extract parameters
-        const { title, body, authorId, tags, category, subcategory, isPublished } = requestBody;
+        const { title, body, authorId, tags, category, subcategory, isPublished } = requestBody; //destructuring 
 
 
         //  Validation starts
@@ -53,7 +53,7 @@ const createBlog = async function(req, res) {
             body,
             authorId,
             category,
-            isPublished: isPublished ? isPublished : false,
+            isPublished: isPublished ? isPublished : false, //ternary operator
             publishedAt: isPublished ? new Date() : null,
         };
 
@@ -85,12 +85,12 @@ const createBlog = async function(req, res) {
 
 const GetData = async function(req, res) {
     try {
-        let query = req.query; //as a object{authorId:surbhi,category:math}
+        let query = req.query;
 
         console.log(query);
         let GetRecord = await blogModel.find({
-            $and: [{ isPublished: true, isDeleted: false, ...query }], //authorid:surbhi,category:math
-        }).populate("authorId")
+            $and: { isPublished: true, isDeleted: false, ...query },
+        }).populate(authorId)
         if (GetRecord.length == 0) {
             return res.status(404).send({
                 data: "No such document exist with the given attributes.",
@@ -124,13 +124,13 @@ const updateDetails = async function(req, res) {
                 .send({ status: false, message: `BlogId is invalid.` });
         }
 
-        if (!validator.isValidString(title)) {
+        if (!validator.isValid(title)) {
             return res
                 .status(400)
                 .send({ status: false, message: "Title is required for updatation." });
         }
 
-        if (!validator.isValidString(body)) {
+        if (!validator.isValid(body)) {
             return res
                 .status(400)
                 .send({ status: false, message: "Body is required for updatation." });
@@ -250,8 +250,15 @@ const deleteBlogById = async function(req, res) {
         if (!data) {
             return res.status(400).send({ status: false, message: "No such blog found" })
         }
+        // if (Blog.authorId.toString() !== authorIdFromToken) {
+        //     res.status(401).send({
+        //         status: false,
+        //         message: `Unauthorized access! author's info doesn't match`,
+        //     });
+        //     return;
+        // }
         let Update = await blogModel.findOneAndUpdate({ _id: id }, { isDeleted: true, deletedAt: Date() }, { new: true })
-        res.status(200).send({ status: true, dataa: Update })
+        res.status(200).send({ status: true, data: Update })
     } catch (err) {
         res.status(500).send({ status: false, Error: err.message });
     }
@@ -293,8 +300,8 @@ module.exports = {
 }
 
 
-// arr = [1, 2, 3]
-// const [a, b, ...n] = [1, 2, 3]
+// arr = ["1", "2", "3"]
+// const [a, b, ...n] = ["1", "2", "3"]
 // console.log(a)
 // console.log(b)
 // console.log(n)
