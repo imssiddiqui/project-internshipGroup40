@@ -84,22 +84,22 @@ const createBlog = async function(req, res) {
 };
 
 const GetData = async function(req, res) {
-    try {
-        let query = req.query;
+    // try {
+    let query = req.query;
 
-        console.log(query);
-        let GetRecord = await blogModel.find({
-            $and: { isPublished: true, isDeleted: false, ...query },
-        }).populate(authorId)
-        if (GetRecord.length == 0) {
-            return res.status(404).send({
-                data: "No such document exist with the given attributes.",
-            });
-        }
-        res.status(200).send({ status: true, data: GetRecord });
-    } catch (err) {
-        res.status(500).send({ status: false, data: err.message });
+    console.log(query);
+    let GetRecord = await blogModel.find({
+        $and: { isPublished: true, isDeleted: false, ...query },
+    }).populate(authorId)
+    if (GetRecord.length == 0) {
+        return res.status(404).send({
+            data: "No such document exist with the given attributes.",
+        });
     }
+    res.status(200).send({ status: true, data: GetRecord });
+    // } catch (err) {
+    //     res.status(500).send({ status: false, data: err.message });
+    // }
 };
 
 // const updateBlog = async function(req, res) {
@@ -157,13 +157,13 @@ const updateDetails = async function(req, res) {
         if (!Blog) {
             return res.status(400).send({ status: false, msg: "No such blog found" });
         }
-        // if (Blog.authorId.toString() !== authorIdFromToken) {
-        //     res.status(401).send({
-        //         status: false,
-        //         message: `Unauthorized access! author's info doesn't match`,
-        //     });
-        //     return;
-        // }
+        if (Blog.authorId.toString() !== authorIdFromToken) {
+            res.status(401).send({
+                status: false,
+                message: `Unauthorized access! author's info doesn't match`,
+            });
+            return;
+        }
         if (
             req.body.title ||
             req.body.body ||
@@ -205,59 +205,33 @@ const updateDetails = async function(req, res) {
         });
     }
 };
-//     try {
-//         const blogId = req.params.blogId;
-//         const details = req.body;
-//         if (!blogId) {
-//             return res
-//                 .status(400)
-//                 .send({ status: false, data: "Please enter a blog id" });
-//         }
-//         if (details.category || details.authorId) {
-//             return res.status(400).send({
-//                 status: false,
-//                 data: "You cannot change authorId or category",
-//             });
-//         }
-//         const updatedDetails = await blogModel.findOneAndUpdate({ _id: blogId }, {
-//             title: details.title,
-//             body: details.body,
-//             $push: {
-//                 tags: details.tags,
-//                 subcategory: details.subcategory
-//             },
-//             isPublished: true,
-//             publishedAt: new Date(),
-//         }, { new: true, upsert: true });
-//         res.status(200).send({ status: true, data: updatedDetails });
-//     } catch (err) {
-//         console.log("This is the error 1", err.message);
-//         res.status(500).send({ status: false, data: err.message });
-//     }
-// };
+
 
 const deleteBlogById = async function(req, res) {
 
     try {
-        let id = req.params.blogId;
-        if (!validator.isValidObjectId(id)) {
+        let blogId = req.params.blogId;
+
+        if (!validator.isValidObjectId(blogId)) {
             return res
                 .status(400)
                 .send({ status: false, message: " BlogId is invalid." });
         }
 
-        let data = await blogModel.findOne({ _id: id });
+        let data = await blogModel.findOne({ _id: blogId });
         if (!data) {
             return res.status(400).send({ status: false, message: "No such blog found" })
         }
-        // if (Blog.authorId.toString() !== authorIdFromToken) {
-        //     res.status(401).send({
-        //         status: false,
-        //         message: `Unauthorized access! author's info doesn't match`,
-        //     });
-        //     return;
-        // }
-        let Update = await blogModel.findOneAndUpdate({ _id: id }, { isDeleted: true, deletedAt: Date() }, { new: true })
+        let authorIdFromToken = req.authorId;
+        let Blog = await blogModel.findOne({ _id: blogId });
+        if (Blog.authorId.toString() !== authorIdFromToken) {
+            res.status(401).send({
+                status: false,
+                message: `Unauthorized access! author's info doesn't match`,
+            });
+            return;
+        }
+        let Update = await blogModel.findOneAndUpdate({ _id: blogId }, { isDeleted: true, deletedAt: Date() }, { new: true })
         res.status(200).send({ status: true, data: Update })
     } catch (err) {
         res.status(500).send({ status: false, Error: err.message });
