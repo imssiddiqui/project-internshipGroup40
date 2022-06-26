@@ -1,6 +1,7 @@
 const blogModel = require("../model/blogModel");
 const authorModel = require("../model/authorModel");
 const validator = require("../utils/validator");
+const { Query } = require("mongoose");
 
 
 
@@ -83,26 +84,76 @@ const createBlog = async function(req, res) {
     }
 };
 
-const GetData = async function(req, res) {
-    // try {
-    let query = req.query;
+// const GetData = async function(req, res) {
+//     // try {
+//     let query = req.query;
 
-    console.log(query);
-    let GetRecord = await blogModel.find({
-        $and: { isPublished: true, isDeleted: false, ...query },
-    }).populate(authorId)
-    if (GetRecord.length == 0) {
-        return res.status(404).send({
-            data: "No such document exist with the given attributes.",
-        });
-    }
-    res.status(200).send({ status: true, data: GetRecord });
-    // } catch (err) {
-    //     res.status(500).send({ status: false, data: err.message });
-    // }
-};
+//     console.log(query);
+//     let GetRecord = await blogModel.find({
+//         $and: { isPublished: true, isDeleted: false, ...query },
+//     }).populate(authorId)
+//     if (GetRecord.length == 0) {
+//         return res.status(404).send({
+//             data: "No such document exist with the given attributes.",
+//         });
+//     }
+//     res.status(200).send({ status: true, data: GetRecord });
+//     // } catch (err) {
+//     //     res.status(500).send({ status: false, data: err.message });
+//     // }
+// };
 
 // const updateBlog = async function(req, res) {
+
+const getBlog = async function(req, res) {
+    try {
+        //getting data from query params
+        let query = req.query
+            //checking if there is any filter present or not
+        if (Object.keys(query).length >= 1) {
+            //adding more conditions to the filter
+            query.isDeleted = false
+            query.isPublished = true
+                //checking if we have a tag filter to match
+            if (query.tags) {
+                let tagArray
+                if (query.tags.includes(",")) {
+                    tagArray = query.tags.split(",").map(String).map(x => x.trim())
+                    console.log(tagArray)
+                    query.tags = { $all: tagArray }
+                    console.log(query.tags)
+                } else {
+                    tagArray = query.tags.trim().split("    ").map(String).map(x => x.trim())
+                    query.tags = { $all: tagArray }
+                }
+            }
+
+
+            //checking if we have a subcatagory filter to match
+            if (query.subcategory) {
+                let subcatArray
+                if (query.subcategory.includes(",")) {
+                    subcatArray = query.subcategory.split(",").map(String).map(x => x.trim())
+                    query.subcategory = { $all: subcatArray }
+                } else {
+                    subcatArray = query.subcategory.trim().split("    ").map(String).map(x => x.trim())
+                    query.subcategory = { $all: subcatArray }
+                }
+            }
+
+
+            //finding the data using the filter
+            let filteredBlogs = await blogModel.find(query)
+            if (filteredBlogs.length === 0) return res.status(404).send({ status: false, msg: "No such data available" })
+            else return res.status(200).send({ status: true, msg: filteredBlogs })
+        }
+        let blogs = await blogModel.find({ isDeleted: false, isPublished: true })
+        if (blogs.length == 0) res.status(404).send({ status: false, msg: "No result found" })
+        res.status(200).send({ status: true, msg: blogs })
+    } catch (err) {
+        res.status(500).send({ status: false, msg: err.message })
+    }
+}
 
 
 //Update blogs
@@ -112,6 +163,7 @@ const updateDetails = async function(req, res) {
         let blogId = req.params.blogId;
         let requestBody = req.body;
         const { title, body, tags, subcategory } = requestBody;
+
 
         if (!validator.isValidRequestBody(req.params)) {
             return res.status(400).send({ status: false, message: "Invalid request parameters. Please provide query details" });
@@ -254,7 +306,7 @@ const deleteByQuery = async function(req, res) {
             }
         }
         let data = await blogModel.find({ $or: [{ category: category }, { authorId: authorId }, { tags: tags }, { subcategory: subcategory }, { isPublished: isPublished }] });
-        if (!data) {
+        if (!data && data.length === 0) {
             return res.status(403).send({ status: false, message: "no such data exists" })
         }
         let Update = await blogModel.updateMany({ $or: [{ category: category }, { authorId: authorId }, { tags: tags }, { subcategory: subcategory }, { isPublished: isPublished }] }, { $set: { isDeleted: true } }, { new: true })
@@ -267,7 +319,7 @@ const deleteByQuery = async function(req, res) {
 
 module.exports = {
     createBlog,
-    GetData,
+    getBlog,
     updateDetails,
     deleteBlogById,
     deleteByQuery
