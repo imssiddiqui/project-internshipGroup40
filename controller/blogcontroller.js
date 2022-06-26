@@ -1,14 +1,14 @@
 const blogModel = require("../model/blogModel");
 const authorModel = require("../model/authorModel");
 const validator = require("../utils/validator");
-const { Query } = require("mongoose");
+const mongoose = require("mongoose");
 
 
 
 const createBlog = async function(req, res) {
     try {
         let requestBody = req.body;
-        // const tokenId = req.authorId
+
         if (!validator.isValidRequestBody(requestBody)) {
             return res.status(400).send({
                 status: false,
@@ -84,26 +84,7 @@ const createBlog = async function(req, res) {
     }
 };
 
-// const GetData = async function(req, res) {
-//     // try {
-//     let query = req.query;
-
-//     console.log(query);
-//     let GetRecord = await blogModel.find({
-//         $and: { isPublished: true, isDeleted: false, ...query },
-//     }).populate(authorId)
-//     if (GetRecord.length == 0) {
-//         return res.status(404).send({
-//             data: "No such document exist with the given attributes.",
-//         });
-//     }
-//     res.status(200).send({ status: true, data: GetRecord });
-//     // } catch (err) {
-//     //     res.status(500).send({ status: false, data: err.message });
-//     // }
-// };
-
-// const updateBlog = async function(req, res) {
+//get blogs for fetching data  
 
 const getBlog = async function(req, res) {
     try {
@@ -164,24 +145,24 @@ const updateDetails = async function(req, res) {
         let requestBody = req.body;
         const { title, body, tags, subcategory } = requestBody;
 
-
+        //validation for body
         if (!validator.isValidRequestBody(req.params)) {
             return res.status(400).send({ status: false, message: "Invalid request parameters. Please provide query details" });
         }
 
-
+        //validation starts to here
         if (!validator.isValidObjectId(blogId)) {
             return res
                 .status(400)
                 .send({ status: false, message: `BlogId is invalid.` });
         }
-
+        //title validation
         if (!validator.isValid(title)) {
             return res
                 .status(400)
                 .send({ status: false, message: "Title is required for updatation." });
         }
-
+        //body validation
         if (!validator.isValid(body)) {
             return res
                 .status(400)
@@ -283,12 +264,23 @@ const deleteBlogById = async function(req, res) {
             });
             return;
         }
-        let Update = await blogModel.findOneAndUpdate({ _id: blogId }, { isDeleted: true, deletedAt: Date() }, { new: true })
-        res.status(200).send({ status: true, data: Update })
+
+        if (Blog.isDeleted == false) {
+            let Update = await blogModel.findOneAndUpdate({ _id: blogId }, { isDeleted: true, deletedAt: Date() }, { new: true });
+            return res.status(200).send({
+                status: true,
+                message: "successfully deleted blog",
+            });
+        } else {
+            return res
+                .status(404)
+                .send({ status: false, msg: "Blog already deleted" });
+        }
     } catch (err) {
-        res.status(500).send({ status: false, Error: err.message });
+        res.status(500).send({ status: false, msg: err.message });
     }
 }
+
 const deleteByQuery = async function(req, res) {
     try {
         let category = req.query.category
@@ -306,8 +298,8 @@ const deleteByQuery = async function(req, res) {
             }
         }
         let data = await blogModel.find({ $or: [{ category: category }, { authorId: authorId }, { tags: tags }, { subcategory: subcategory }, { isPublished: isPublished }] });
-        if (!data && data.length === 0) {
-            return res.status(403).send({ status: false, message: "no such data exists" })
+        if (data.length == 0) {
+            return res.status(404).send({ status: false, message: "no such data exists" })
         }
         let Update = await blogModel.updateMany({ $or: [{ category: category }, { authorId: authorId }, { tags: tags }, { subcategory: subcategory }, { isPublished: isPublished }] }, { $set: { isDeleted: true } }, { new: true })
         res.send({ status: true, data: Update })
@@ -317,6 +309,7 @@ const deleteByQuery = async function(req, res) {
 
 }
 
+
 module.exports = {
     createBlog,
     getBlog,
@@ -324,10 +317,3 @@ module.exports = {
     deleteBlogById,
     deleteByQuery
 }
-
-
-// arr = ["1", "2", "3"]
-// const [a, b, ...n] = ["1", "2", "3"]
-// console.log(a)
-// console.log(b)
-// console.log(n)
